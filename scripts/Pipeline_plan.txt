@@ -1,0 +1,24 @@
+Generic RAG Application with Streamlit
+
+2 Main Functionality:
+Read Word doc, PDF, Txt, html
+    Others: print error msg saying don't have ability to work on them.
+CSV analysis
+
+
+Load those files into Text
+    1. doc, pdf, txt, Json -> text embedding
+    2. Html
+        - HTML loader, BeautifulSoup
+        - Header and body and embed
+
+Text-splitter 8192 overlap 1000
+embedding open-ai small
+
+csv generic analysis
+        - Check the csv is 
+        - number of rows, columns, data types 
+        - missing data guidance, remove any duplicates
+        - filteration: remove any column not needed or rows that are irrelevant.
+        - visualisation. PowerBI toolkit
+
