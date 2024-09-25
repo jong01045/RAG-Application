@@ -1,14 +1,43 @@
-from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import Docx2txtLoader
+from langchain_community.document_loaders import TextLoader
+
+from dotenv import load_dotenv
 import os
+from dataclasses import dataclass
+from typing import Type
 
 load_dotenv()
 
 # Make sure the filenames are repeated
 
+# Parent document loader class
+@dataclass
+class Document_loader:
+
+    document_loader_class : Type    # Appropriate document loader class 
+
+    def load_document(self, files):
+        #Files uploaded by the user is stored in Loaded_Files folder.    
+        file_path = "../Loaded_Files/"
+        files = [file_path + file for file in files]
+
+        # A dictionary of document lists
+        # {Filename (str) : list[Document]}
+        # Contain all other documents, in case where the number of file is more than one.
+        total_doc = {}
+
+        #Recursively load all files
+        for file in files:
+            loader = self.document_loader_class(file)
+            docs = loader.load()
+
+            total_doc[file] = docs
+
+        return total_doc
 
 # PDF loader
-# PyPDFLoader
+# Unstructured 
 def pdf_document_loader(files : list[str]) -> dict:
 
     #Files uploaded by the user is stored in Loaded_Files folder.
@@ -53,6 +82,41 @@ def file_type_filter(files : list[str]) -> dict:
     
     return files_by_extension
 
+def load_all_files(files_by_filetype) -> dict:
+    # A list of PDF documents
+    pdf_files = files_by_filetype['pdf']
+    docx_files = files_by_filetype['docx']
+    txt_files = files_by_filetype['txt']
+
+    # Document loader objects
+    pdf_loader = Document_loader(document_loader_class=PyPDFLoader)         #PDF
+    docx_loader = Document_loader(document_loader_class=Docx2txtLoader)     #DOCX
+    txt_loader = Document_loader(document_loader_class=TextLoader)          #TXT
+
+    # Dictionaries
+        # Contain all loaded documents
+    # PDF, DOCX, TXT
+    # {filename (str) : list[Document], ...}
+    pdf_docs = pdf_loader.load_document(files=pdf_files)
+    docx_docs = docx_loader.load_document(files=docx_files)
+    txt_docs = txt_loader.load_document(files=txt_files)
+
+    # Merged dictionary
+    merged_dict = {**pdf_docs, **docx_docs, **txt_docs}
+
+    return merged_dict
+
+# Pretty print to see the load result to test
+def pretty_print(docs_dict : dict):
+
+    # Loop over all Document objects in the dictionary
+    for _, documents in docs_dict.items():
+        for document in documents:
+            source = document.metadata['source']        # File location
+            # page = document.metadata['page']            # No. Page
+            content = document.page_content             # Actual text content
+            pagebreak = "-" * 40
+            print(f"Document {source}:\n\nPage Content:\n{content}\n\n{pagebreak}\n")
 
 if __name__ == "__main__":
 
@@ -67,17 +131,6 @@ if __name__ == "__main__":
     # e.g) {"pdf" : [document, document1, document2], ...}
     files_by_filetype = file_type_filter(files)
 
-    # A list of PDF documents
-    pdf_files = files_by_filetype['pdf']
+    all_file_docs_dict = load_all_files(files_by_filetype)
 
-    # dict
-    # {filename (str) : list[Document], ...}
-    pdf_docs = pdf_document_loader(files = pdf_files)
-
-    for filename, documents in pdf_docs.items():
-        for document in documents:
-            source = document.metadata['source']
-            page = document.metadata['page']
-            content = document.page_content
-            pagebreak = "-" * 40
-            print(f"Document {source}:\nPage:{page}\nPage Content:\n{content}\n\n{pagebreak}\n")
+    pretty_print(all_file_docs_dict)
