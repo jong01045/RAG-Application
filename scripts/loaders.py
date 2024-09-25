@@ -1,6 +1,7 @@
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.document_loaders import Docx2txtLoader
 from langchain_community.document_loaders import TextLoader
+from langchain_community.document_loaders import BSHTMLLoader
 
 from dotenv import load_dotenv
 import os
@@ -17,7 +18,8 @@ class Document_loader:
 
     document_loader_class : Type    # Appropriate document loader class 
 
-    def load_document(self, files):
+    # Versatile document loader
+    def load_document(self, files, **kwargs):
         #Files uploaded by the user is stored in Loaded_Files folder.    
         file_path = "../Loaded_Files/"
         files = [file_path + file for file in files]
@@ -29,7 +31,7 @@ class Document_loader:
 
         #Recursively load all files
         for file in files:
-            loader = self.document_loader_class(file)
+            loader = self.document_loader_class(file, **kwargs)
             docs = loader.load()
 
             total_doc[file] = docs
@@ -87,22 +89,26 @@ def load_all_files(files_by_filetype) -> dict:
     pdf_files = files_by_filetype['pdf']
     docx_files = files_by_filetype['docx']
     txt_files = files_by_filetype['txt']
+    html_files = files_by_filetype['html']
 
     # Document loader objects
     pdf_loader = Document_loader(document_loader_class=PyPDFLoader)         #PDF
     docx_loader = Document_loader(document_loader_class=Docx2txtLoader)     #DOCX
     txt_loader = Document_loader(document_loader_class=TextLoader)          #TXT
+    html_loader = Document_loader(document_loader_class=BSHTMLLoader)       #HTML
 
     # Dictionaries
         # Contain all loaded documents
     # PDF, DOCX, TXT
+    # HTML
     # {filename (str) : list[Document], ...}
     pdf_docs = pdf_loader.load_document(files=pdf_files)
     docx_docs = docx_loader.load_document(files=docx_files)
     txt_docs = txt_loader.load_document(files=txt_files)
+    html_docs = html_loader.load_document(files=html_files, open_encoding = "utf-8")
 
     # Merged dictionary
-    merged_dict = {**pdf_docs, **docx_docs, **txt_docs}
+    merged_dict = {**pdf_docs, **docx_docs, **txt_docs, **html_docs}
 
     return merged_dict
 
@@ -115,6 +121,8 @@ def pretty_print(docs_dict : dict):
             source = document.metadata['source']        # File location
             # page = document.metadata['page']            # No. Page
             content = document.page_content             # Actual text content
+            if len(content) > 40:
+                content = content[:40]
             pagebreak = "-" * 40
             print(f"Document {source}:\n\nPage Content:\n{content}\n\n{pagebreak}\n")
 

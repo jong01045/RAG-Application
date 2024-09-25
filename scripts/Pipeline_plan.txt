@@ -7,7 +7,7 @@ CSV analysis
 
 
 Load those files into Text
-    1. docx, pdf, txt, Json -> text embedding
+    1. docx, pdf, txt -> text embedding
     2. Html
         - HTML loader, BeautifulSoup
         - Header and body and embed
